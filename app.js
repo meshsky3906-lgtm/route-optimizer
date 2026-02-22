@@ -17,6 +17,7 @@ const LS_STOPS = 'routeopt_stops_v3';
 const LS_FAVORITES = 'routeopt_favorites_v2';
 const LS_GEOCACHE = 'routeopt_geocache_v1';
 const LS_THEME = 'routeopt_theme';
+const LS_INIT = 'routeopt_initialized'; // 初始化標記
 
 const THEMES = [
   { id: '', label: '🌑 暗夜' },
@@ -25,31 +26,8 @@ const THEMES = [
   { id: 'mint', label: '🍃 薄荷' },
 ];
 
-// ── 30 個測試地址（藥局×10 / 診所×10 / 醫院×10）─────────────
+// ── 醫院測試地址（僅保留 10 筆醫院）─────────────
 const TEST_ADDRESSES = [
-  // ── 藥局 ──
-  { address: '高雄市三民區正興路183號', name: '新久億藥局', type: '藥局', lat: 22.6367, lng: 120.3237 },
-  { address: '高雄市三民區澄和路66號', name: '澄和藥局', type: '藥局', lat: 22.6501, lng: 120.3321 },
-  { address: '高雄市三民區建工路616號', name: '康誠藥局', type: '藥局', lat: 22.6441, lng: 120.3268 },
-  { address: '高雄市鳳山區光遠路95號', name: '光田藥局', type: '藥局', lat: 22.6275, lng: 120.3585 },
-  { address: '高雄市前鎮區草衙二路360號', name: '桂林活力藥局草衙店', type: '藥局', lat: 22.5847, lng: 120.3310 },
-  { address: '高雄市新興區大同一路203號', name: '連作藥局', type: '藥局', lat: 22.6319, lng: 120.3031 },
-  { address: '高雄市新興區六合路153號', name: '元盛藥局', type: '藥局', lat: 22.6313, lng: 120.2975 },
-  { address: '高雄市岡山區平和路125號', name: '千千藥局', type: '藥局', lat: 22.7966, lng: 120.2955 },
-  { address: '高雄市仁武區中華路40號', name: '奇美藥局', type: '藥局', lat: 22.7001, lng: 120.3487 },
-  { address: '高雄市旗津區中洲三路513號', name: '千佑藥局', type: '藥局', lat: 22.5816, lng: 120.2656 },
-  // ── 診所 ──
-  { address: '高雄市三民區覺民路504號', name: '柏仁耳鼻喉科診所', type: '診所', lat: 22.6478, lng: 120.3174 },
-  { address: '高雄市三民區天祥一路117號', name: '天祥內科診所', type: '診所', lat: 22.6485, lng: 120.3131 },
-  { address: '高雄市鳳山區八德路二段267號', name: '長英牙醫診所', type: '診所', lat: 22.6174, lng: 120.3584 },
-  { address: '高雄市苓雅區武慶三路30號', name: '慶馨家醫科診所', type: '診所', lat: 22.6201, lng: 120.3229 },
-  { address: '高雄市苓雅區建軍路4號', name: '建軍耳鼻喉科診所', type: '診所', lat: 22.6183, lng: 120.3368 },
-  { address: '高雄市楠梓區藍田路393號', name: '藍田眼科診所', type: '診所', lat: 22.7203, lng: 120.3262 },
-  { address: '高雄市楠梓區後昌路776號', name: '後昌聯合診所', type: '診所', lat: 22.7099, lng: 120.2896 },
-  { address: '高雄市大寮區鳳屏一路418號', name: '鳳屏小兒科診所', type: '診所', lat: 22.5916, lng: 120.3868 },
-  { address: '高雄市林園區林園北路168號', name: '林園家醫科診所', type: '診所', lat: 22.5098, lng: 120.3916 },
-  { address: '高雄市旗山區大同街4號', name: '旗山內科診所', type: '診所', lat: 22.8872, lng: 120.4833 },
-  // ── 醫院 ──
   { address: '高雄市左營區大中一路386號', name: '高雄榮民總醫院', type: '醫院', lat: 22.6818, lng: 120.2917 },
   { address: '高雄市鳥松區大埤路123號', name: '高雄長庚紀念醫院', type: '醫院', lat: 22.6494, lng: 120.3540 },
   { address: '高雄市三民區自由一路100號', name: '高雄醫學大學附設醫院', type: '醫院', lat: 22.6508, lng: 120.3111 },
@@ -85,7 +63,14 @@ let activeFilter = 'all';
 document.addEventListener('DOMContentLoaded', () => {
   loadFromStorage();
   restoreTheme();
-  if (stops.length === 0) loadTestAddresses();
+
+  // 強化持久化邏輯：僅在「未初始化過」時載入測試醫院
+  const hasInited = localStorage.getItem(LS_INIT);
+  if (!hasInited) {
+    loadTestAddresses();
+    localStorage.setItem(LS_INIT, 'true');
+  }
+
   const lbl = $('origin-label');
   if (lbl) lbl.textContent = FIXED_HOME_LABEL;
   renderStops();
@@ -103,7 +88,7 @@ function loadTestAddresses() {
   }));
   TEST_ADDRESSES.forEach(t => { geoCache[t.address] = { lat: t.lat, lng: t.lng }; });
   saveStops(); saveGeoCache();
-  toast('已載入 30 個藥局/診所/醫院測試地址', 'success', 3000);
+  toast('已載入 10 個核心醫院測試地址', 'success', 3000);
 }
 
 // ── 主題 ─────────────────────────────────────────────────────
@@ -133,9 +118,6 @@ function bindEvents() {
   const addrInput = $('address-input');
   if (addrInput) addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStop(); });
 
-  const btnImportGS = $('btn-import-gsheet');
-  if (btnImportGS) btnImportGS.addEventListener('click', importGoogleSheet);
-
   $('btn-clear-all').addEventListener('click', () => {
     if (stops.length === 0) return;
     if (!confirm('確定要清除所有站點嗎？')) return;
@@ -153,20 +135,34 @@ function bindEvents() {
 
 // ── Storage ──────────────────────────────────────────────────
 function loadFromStorage() {
-  try {
-    stops = JSON.parse(localStorage.getItem(LS_STOPS)) || [];
-    favorites = JSON.parse(localStorage.getItem(LS_FAVORITES)) || [];
-    geoCache = JSON.parse(localStorage.getItem(LS_GEOCACHE)) || {};
-    stops = stops.map(s => ({
-      id: s.id || uid(), address: s.address || '', name: s.name || '',
-      type: s.type || detectType(s.name || s.address || ''),
-      district: s.district || extractDistrict(s.address || ''),
-    }));
-  } catch { stops = []; favorites = []; geoCache = {}; }
+  try { stops = JSON.parse(localStorage.getItem(LS_STOPS)); if (!Array.isArray(stops)) stops = []; } catch { stops = []; }
+  try { favorites = JSON.parse(localStorage.getItem(LS_FAVORITES)); if (!Array.isArray(favorites)) favorites = []; } catch { favorites = []; }
+  try { geoCache = JSON.parse(localStorage.getItem(LS_GEOCACHE)); if (typeof geoCache !== 'object' || geoCache === null) geoCache = {}; } catch { geoCache = {}; }
+
+  stops = stops.map(s => ({
+    id: s.id || uid(), address: s.address || '', name: s.name || '',
+    type: s.type || detectType(s.name || s.address || ''),
+    district: s.district || extractDistrict(s.address || ''),
+  }));
 }
-function saveStops() { localStorage.setItem(LS_STOPS, JSON.stringify(stops)); }
-function saveFavorites() { localStorage.setItem(LS_FAVORITES, JSON.stringify(favorites)); }
-function saveGeoCache() { localStorage.setItem(LS_GEOCACHE, JSON.stringify(geoCache)); }
+
+function saveStops() {
+  try { localStorage.setItem(LS_STOPS, JSON.stringify(stops)); }
+  catch (e) { console.error('Save stops error:', e); }
+}
+
+function saveFavorites() {
+  try { localStorage.setItem(LS_FAVORITES, JSON.stringify(favorites)); }
+  catch (e) {
+    console.error('Save favorites error:', e);
+    toast('常用地址儲存失敗，可能因無痕模式或空間不足', 'error');
+  }
+}
+
+function saveGeoCache() {
+  try { localStorage.setItem(LS_GEOCACHE, JSON.stringify(geoCache)); }
+  catch (e) { console.error('Save geoCache error:', e); }
+}
 
 // ── 工具 ─────────────────────────────────────────────────────
 function $(id) { return document.getElementById(id); }
@@ -354,103 +350,8 @@ function solveTSP(stopsArr, coordsMap) {
   return { sorted, totalKm: gDist };
 }
 
-// ── Google Sheets Import ─────────────────────────────────────
-async function importGoogleSheet() {
-  const urlInput = $('gsheet-url-input');
-  if (!urlInput) return;
-  const rawUrl = urlInput.value.trim();
-  if (!rawUrl) {
-    toast('請輸入 Google 試算表網址', 'error');
-    return;
-  }
-
-  const idMatch = rawUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  if (!idMatch) {
-    toast('無效的試算表網址', 'error');
-    return;
-  }
-  const sheetId = idMatch[1];
-  const gidMatch = rawUrl.match(/[?&]gid=([0-9]+)/);
-  const gid = gidMatch ? gidMatch[1] : '0';
-
-  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
-
-  try {
-    showSpinner('正在下載試算表資料...');
-    const res = await fetch(csvUrl);
-    if (!res.ok) throw new Error('無法取得試算表，請確認權限是否設定為「知道連結的人均可檢視」');
-    const text = await res.text();
-
-    const rows = parseCSV(text);
-    if (rows.length < 2) {
-      toast('試算表內容為空或格式錯誤', 'error');
-      hideSortStatus();
-      return;
-    }
-
-    const headers = rows[0].map(h => h.toLowerCase());
-    let nameIdx = headers.findIndex(h => h.includes('名') || h.includes('name'));
-    let addrIdx = headers.findIndex(h => h.includes('地址') || h.includes('address') || h.includes('住址'));
-    let typeIdx = headers.findIndex(h => h.includes('類型') || h.includes('type') || h.includes('分類'));
-
-    if (addrIdx === -1) addrIdx = 1;
-    if (nameIdx === -1) nameIdx = 0;
-
-    let importCount = 0;
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row || !row[addrIdx]) continue;
-      const address = row[addrIdx].trim();
-      if (!address) continue;
-
-      const name = row[nameIdx] ? row[nameIdx].trim() : address;
-      const sheetType = (typeIdx !== -1 && row[typeIdx]) ? row[typeIdx].trim() : '';
-
-      stops.push({
-        id: uid(),
-        address: address,
-        name: name,
-        type: detectType(name) || detectType(sheetType) || (sheetType.includes('醫院') ? '醫院' : sheetType.includes('診所') ? '診所' : sheetType.includes('藥局') ? '藥局' : '私人公司'),
-        district: extractDistrict(address)
-      });
-      importCount++;
-    }
-
-    mapsUrls = [];
-    saveStops();
-    renderStops();
-    renderFilterTabs();
-    updateActionButtons();
-    hideSortStatus();
-
-    toast(`成功匯入 ${importCount} 筆地址`, 'success', 4000);
-    urlInput.value = '';
-
-  } catch (err) {
-    console.error(err);
-    showSortError(err.message || '匯入發生錯誤');
-    toast('匯入失敗，請確認網址及分享權限', 'error');
-  }
-}
-
-function parseCSV(text) {
-  const rows = [];
-  let cur = [], inQuote = false, str = '';
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '"') {
-      if (inQuote && text[i + 1] === '"') { str += '"'; i++; }
-      else { inQuote = !inQuote; }
-    }
-    else if (c === ',' && !inQuote) { cur.push(str); str = ''; }
-    else if ((c === '\n' || c === '\r') && !inQuote) {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      cur.push(str); rows.push(cur); cur = []; str = '';
-    } else { str += c; }
-  }
-  if (str || cur.length) { cur.push(str); rows.push(cur); }
-  return rows;
-}
+// ── Google Sheets Import 移除 ─────────────────────────────────
+// 功能已依需求移除
 
 // ── 新增站點 ────────────────────────────────────────────────
 function addStop() {

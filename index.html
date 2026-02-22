@@ -2,6 +2,13 @@
 <html lang="zh-TW">
 
 <head>
+    <meta name="apple-mobile-web-app-title" content="SPEED MAP">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <link rel="apple-touch-icon" href="icon.png">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,6 +23,7 @@
 </head>
 
 <body>
+
 
     <!-- 背景裝飾 -->
     <div class="bg-orb bg-orb--1"></div>
@@ -93,23 +101,6 @@
                         </svg>
                         新增
                     </button>
-                </div>
-                <!-- Google Sheets Import -->
-                <div class="gsheet-import"
-                    style="margin-top: 12px; border-top: 1px dashed var(--clr-border); padding-top: 12px;">
-                    <div class="input-group">
-                        <input type="text" id="gsheet-url-input" class="input-field input-field--sm"
-                            placeholder="貼上 Google 試算表連結..." />
-                        <button class="btn btn--secondary btn--sm" id="btn-import-gsheet" title="解析試算表內容轉換為地址，需開放射群權限">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                            </svg>
-                            匯入試算表
-                        </button>
-                    </div>
                 </div>
             </section>
 
