@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Route Optimizer | 路線優化器</title>
+    <meta name="description" content="智慧路線排序工具，自動優化多點行車路線，支援城鎮優先排序與 Google Maps 導航。" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+</head>
+
+<body>
+
+    <!-- 背景裝飾 -->
+    <div class="bg-orb bg-orb--1"></div>
+    <div class="bg-orb bg-orb--2"></div>
+    <div class="bg-orb bg-orb--3"></div>
+
+    <!-- 主容器 -->
+    <div class="app-shell">
+
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <div class="header__inner">
+                <div class="header__brand">
+                    <div class="header__icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12z" />
+                            <path d="M12 8v4l3 3" />
+                            <path
+                                d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="header__title">Route Optimizer</h1>
+                        <p class="header__subtitle">智慧路線排序</p>
+                    </div>
+                </div>
+                <button class="btn-icon" id="btn-theme" aria-label="切換主題" title="切換主題風格">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5" />
+                        <path
+                            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
+                </button>
+                <button class="btn-icon" id="btn-favorites-toggle" aria-label="常用地址簿" title="常用地址簿">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main">
+
+            <!-- 起點資訊卡（固定） -->
+            <section class="card card--origin" aria-label="起點設定">
+                <div class="card__header">
+                    <span class="badge badge--start">起點</span>
+                    <span class="origin-label" id="origin-label">仁武區興昌巷10號</span>
+                </div>
+                <div class="card__meta-note">出發地與返回地（固定）</div>
+            </section>
+
+            <!-- 終點資訊卡（固定，同起點） -->
+            <section class="card card--dest" aria-label="終點設定">
+                <div class="card__header">
+                    <span class="badge badge--end">終點</span>
+                    <span class="dest-label">仁武區興昌巷10號（固定）</span>
+                </div>
+                <div class="card__meta-note">路線排序後回到出發地</div>
+            </section>
+
+            <!-- 地址輸入區 -->
+            <section class="card add-stop-card" aria-label="新增地址與匯入" style="margin-bottom: 4px;">
+                <div class="input-group">
+                    <input type="text" id="address-input" class="input-field" placeholder="輸入地址或店名..." />
+                    <button class="btn btn--primary" id="btn-add-stop">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        新增
+                    </button>
+                </div>
+                <!-- Google Sheets Import -->
+                <div class="gsheet-import"
+                    style="margin-top: 12px; border-top: 1px dashed var(--clr-border); padding-top: 12px;">
+                    <div class="input-group">
+                        <input type="text" id="gsheet-url-input" class="input-field input-field--sm"
+                            placeholder="貼上 Google 試算表連結..." />
+                        <button class="btn btn--secondary btn--sm" id="btn-import-gsheet" title="解析試算表內容轉換為地址，需開放射群權限">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            匯入試算表
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 路線站點列表 -->
+            <section class="stops-section" aria-label="路線站點">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        路線站點
+                        <span class="stop-count" id="stop-count">0</span>
+                    </h2>
+                    <button class="btn btn--ghost btn--sm" id="btn-clear-all">清除全部</button>
+                </div>
+
+                <!-- 排序狀態列 -->
+                <div class="sort-status" id="sort-status" style="display:none">
+                    <div class="sort-status__spinner" id="sort-spinner" style="display:none">
+                        <div class="spinner"></div>
+                        <span id="sort-status-text">正在取得座標…</span>
+                    </div>
+                    <div class="sort-status__result" id="sort-result" style="display:none">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span id="sort-result-text">排序完成</span>
+                    </div>
+                    <div class="sort-status__error" id="sort-error" style="display:none">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        <span id="sort-error-text">發生錯誤</span>
+                    </div>
+                </div>
+
+                <!-- 分段導航按鈕 -->
+                <div class="segment-buttons" id="segment-buttons" style="display:none"></div>
+
+                <!-- 分類篩選標籤 -->
+                <div class="filter-tabs" id="filter-tabs"></div>
+
+                <!-- 空列表提示 -->
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-state__icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                    </div>
+                    <p class="empty-state__text">尚無站點<br /><span>請在上方輸入框新增地址</span></p>
+                </div>
+
+                <!-- 站點列表 -->
+                <ul class="stops-list" id="stops-list" aria-label="站點列表">
+                    <!-- JS 動態產生 -->
+                </ul>
+            </section>
+
+        </main>
+
+        <!-- ===== 底部操作列 ===== -->
+        <footer class="action-bar">
+            <button class="btn btn--action btn--sort" id="btn-sort" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18M7 12h10M11 18h2" />
+                </svg>
+                🧮 TSP 排序
+            </button>
+            <button class="btn btn--action btn--maps" id="btn-open-maps" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                </svg>
+                Google Maps
+            </button>
+        </footer>
+
+    </div><!-- /app-shell -->
+
+    <!-- ===== 常用地址簿側欄 ===== -->
+    <div class="favorites-overlay" id="favorites-overlay"></div>
+    <aside class="favorites-drawer" id="favorites-drawer" aria-label="常用地址簿" aria-hidden="true">
+        <div class="drawer__header">
+            <h2 class="drawer__title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                常用地址簿
+            </h2>
+            <button class="btn-icon" id="btn-favorites-close" aria-label="關閉">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="drawer__add">
+            <input type="text" id="fav-name-input" class="input-field input-field--sm" placeholder="名稱 (選填)" />
+            <input type="text" id="fav-addr-input" class="input-field input-field--sm" placeholder="地址" />
+            <select id="fav-type-select" class="input-field input-field--sm">
+                <option value="">— 分類 —</option>
+                <option value="藥局">💊 藥局</option>
+                <option value="診所">🏥 診所</option>
+                <option value="醫院">🏨 醫院</option>
+                <option value="私人公司">🏢 私人公司</option>
+            </select>
+            <button class="btn btn--primary btn--full" id="btn-fav-add">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                儲存至常用
+            </button>
+        </div>
+
+        <div class="drawer__divider"></div>
+
+        <div class="drawer__list-wrap">
+            <div class="empty-state empty-state--sm" id="fav-empty-state">
+                <p>尚無常用地址<br /><span>請在上方新增</span></p>
+            </div>
+            <ul class="favorites-list" id="favorites-list" aria-label="常用地址列表">
+                <!-- JS 動態產生 -->
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ===== Toast 通知 ===== -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
