@@ -259,12 +259,7 @@ async function geocodeAddress(addr) {
 async function tryNominatim(addr) {
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=tw&email=routeopt@example.com`,
-      {
-        headers: {
-          'Accept-Language': 'zh-TW'
-        },
-        signal: AbortSignal.timeout(8000)
-      });
+      { signal: AbortSignal.timeout(8000) });
     if (!r.ok) return null;
     const d = await r.json();
     return d?.length ? { lat: +d[0].lat, lng: +d[0].lon } : null;
@@ -747,12 +742,7 @@ async function fetchSuggestions(query, dropdown, input) {
   acController = new AbortController();
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=tw&accept-language=zh-TW&email=routeopt@example.com`;
-    const res = await fetch(url, {
-      headers: {
-        'Accept-Language': 'zh-TW'
-      },
-      signal: acController.signal
-    });
+    const res = await fetch(url, { signal: acController.signal });
     if (!res.ok) return;
     const data = await res.json();
     dropdown.innerHTML = '';
