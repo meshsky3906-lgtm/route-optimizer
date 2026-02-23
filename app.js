@@ -258,12 +258,10 @@ async function geocodeAddress(addr) {
 }
 async function tryNominatim(addr) {
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=tw`,
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=tw&email=routeopt@example.com`,
       {
-        mode: 'cors',
         headers: {
-          'Accept-Language': 'zh-TW',
-          'User-Agent': 'RouteOptimizer/8.0 (contact@example.com)'
+          'Accept-Language': 'zh-TW'
         },
         signal: AbortSignal.timeout(8000)
       });
@@ -384,7 +382,7 @@ async function startSort() {
     const { coords, failed } = await geocodeAllStops(filtered);
     let sorted = null;
 
-    if (coords.size >= 2) {
+    if (coords.size >= 1) {
       showSpinner(`🧮 TSP 計算 ${label} 最短路線…`);
       await sleep(30);
       const r = solveTSP(filtered, coords);
@@ -748,12 +746,10 @@ async function fetchSuggestions(query, dropdown, input) {
   if (acController) acController.abort();
   acController = new AbortController();
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=tw&accept-language=zh-TW`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=tw&accept-language=zh-TW&email=routeopt@example.com`;
     const res = await fetch(url, {
-      mode: 'cors',
       headers: {
-        'Accept-Language': 'zh-TW',
-        'User-Agent': 'RouteOptimizer/8.0 (contact@example.com)'
+        'Accept-Language': 'zh-TW'
       },
       signal: acController.signal
     });
