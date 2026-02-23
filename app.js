@@ -21,8 +21,6 @@ const LS_INIT = 'routeopt_initialized'; // 初始化標記
 
 const THEMES = [
   { id: '', label: '🌑 暗夜' },
-  { id: 'ocean', label: '🌊 海洋' },
-  { id: 'sunset', label: '🌅 日落' },
   { id: 'mint', label: '🍃 薄荷' },
 ];
 

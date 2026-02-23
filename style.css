@@ -49,59 +49,7 @@
     --bg-blob-2: rgba(167, 139, 250, 0.06);
 }
 
-/* ── 🌊 Ocean 深海主題 ──────────────────────────────────── */
-[data-theme="ocean"] {
-    --clr-bg: #0a192f;
-    --clr-surface: rgba(100, 200, 255, 0.07);
-    --clr-surface-hover: rgba(100, 200, 255, 0.12);
-    --clr-border: rgba(100, 200, 255, 0.12);
-    --clr-border-focus: rgba(0, 210, 255, 0.6);
-
-    --clr-primary: #00d2ff;
-    --clr-primary-hover: #00b8e6;
-    --clr-primary-subtle: rgba(0, 210, 255, 0.15);
-
-    --clr-accent: #7928ca;
-    --clr-success: #00e68a;
-    --clr-danger: #ff6b81;
-    --clr-warning: #ffa502;
-
-    --clr-text-1: #e6f1ff;
-    --clr-text-2: #8892b0;
-    --clr-text-3: #495670;
-
-    --shadow-glow: 0 0 24px rgba(0, 210, 255, 0.20);
-    --bg-gradient: linear-gradient(160deg, #0a192f 0%, #112240 40%, #0a192f 100%);
-    --bg-blob-1: rgba(0, 210, 255, 0.06);
-    --bg-blob-2: rgba(121, 40, 202, 0.05);
-}
-
-/* ── 🌅 Sunset 暖日落主題 ───────────────────────────────── */
-[data-theme="sunset"] {
-    --clr-bg: #1a1115;
-    --clr-surface: rgba(255, 150, 100, 0.08);
-    --clr-surface-hover: rgba(255, 150, 100, 0.13);
-    --clr-border: rgba(255, 150, 100, 0.12);
-    --clr-border-focus: rgba(255, 107, 107, 0.6);
-
-    --clr-primary: #ff6b6b;
-    --clr-primary-hover: #ee5a5a;
-    --clr-primary-subtle: rgba(255, 107, 107, 0.15);
-
-    --clr-accent: #feca57;
-    --clr-success: #1dd1a1;
-    --clr-danger: #ff4757;
-    --clr-warning: #ff9f43;
-
-    --clr-text-1: #fff5ee;
-    --clr-text-2: #c4a88a;
-    --clr-text-3: #6b5544;
-
-    --shadow-glow: 0 0 24px rgba(255, 107, 107, 0.18);
-    --bg-gradient: linear-gradient(160deg, #1a1115 0%, #2d1b27 40%, #1f1520 100%);
-    --bg-blob-1: rgba(255, 107, 107, 0.06);
-    --bg-blob-2: rgba(254, 202, 87, 0.05);
-}
+/* Removed Ocean and Sunset themes */
 
 /* ── 🍃 Mint 薄荷清新主題 ───────────────────────────────── */
 [data-theme="mint"] {
@@ -559,6 +507,7 @@ a {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .input-field::placeholder {
