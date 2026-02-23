@@ -89,20 +89,7 @@
                 <div class="card__meta-note">路線排序後回到出發地</div>
             </section>
 
-            <!-- 地址輸入區 -->
-            <section class="card add-stop-card" aria-label="新增地址與匯入" style="margin-bottom: 4px;">
-                <div class="input-group">
-                    <input type="text" id="address-input" class="input-field" placeholder="輸入地址或店名..." />
-                    <button class="btn btn--primary" id="btn-add-stop">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
-                        新增
-                    </button>
-                </div>
-            </section>
+            <!-- 地址輸入區 (已遷移至常用地址簿) -->
 
             <!-- 路線站點列表 -->
             <section class="stops-section" aria-label="路線站點">
@@ -233,6 +220,19 @@
             <ul class="favorites-list" id="favorites-list" aria-label="常用地址列表">
                 <!-- JS 動態產生 -->
             </ul>
+        </div>
+
+        <div class="drawer__footer" id="fav-selection-footer"
+            style="display: none; padding: 16px; border-top: 1px solid var(--clr-border); background: var(--clr-bg); position: sticky; bottom: 0; z-index: 10;">
+            <div style="margin-bottom: 8px; font-size: 13px; color: var(--clr-text-2);" id="fav-selection-count">已選取 0 項
+            </div>
+            <button class="btn btn--primary btn--full" id="btn-fav-confirm">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                確認選擇
+            </button>
         </div>
     </aside>
 

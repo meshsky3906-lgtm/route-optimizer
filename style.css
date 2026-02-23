@@ -983,10 +983,21 @@ a {
     border-radius: var(--radius-md);
     transition: all var(--transition);
     animation: fade-in-up 0.2s ease both;
+    user-select: none;
 }
 
 .fav-item:hover {
     background: var(--clr-surface-hover);
+}
+
+.fav-item.is-selected {
+    background: var(--clr-primary-subtle);
+    border-color: var(--clr-primary);
+}
+
+.fav-checkbox {
+    accent-color: var(--clr-primary);
+    cursor: pointer;
 }
 
 .fav-item__body {
@@ -1012,18 +1023,7 @@ a {
     text-overflow: ellipsis;
 }
 
-.fav-item__add-btn {
-    color: var(--clr-primary);
-    padding: 6px;
-    border-radius: var(--radius-sm);
-    transition: all var(--transition);
-    flex-shrink: 0;
-}
-
-.fav-item__add-btn:hover {
-    background: var(--clr-primary-subtle);
-}
-
+/* (Add button removed) */
 .fav-item__del-btn {
     color: var(--clr-text-3);
     padding: 6px;

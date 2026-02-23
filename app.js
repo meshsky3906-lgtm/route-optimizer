@@ -58,6 +58,7 @@ let geoCache = {};
 let mapsUrls = [];
 let dragSrcIdx = null;
 let activeFilter = 'all';
+let selectedFavs = new Set();
 
 // ── 初始化 ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -113,11 +114,6 @@ function bindEvents() {
   $('btn-open-maps').addEventListener('click', openMaps);
   $('btn-theme').addEventListener('click', cycleTheme);
 
-  const btnAddStop = $('btn-add-stop');
-  if (btnAddStop) btnAddStop.addEventListener('click', addStop);
-  const addrInput = $('address-input');
-  if (addrInput) addrInput.addEventListener('keydown', e => { if (e.key === 'Enter') addStop(); });
-
   $('btn-clear-all').addEventListener('click', () => {
     if (stops.length === 0) return;
     if (!confirm('確定要清除所有站點嗎？')) return;
@@ -130,6 +126,10 @@ function bindEvents() {
   $('btn-favorites-close').addEventListener('click', closeDrawer);
   $('favorites-overlay').addEventListener('click', closeDrawer);
   $('btn-fav-add').addEventListener('click', addFavorite);
+
+  const btnFavConfirm = $('btn-fav-confirm');
+  if (btnFavConfirm) btnFavConfirm.addEventListener('click', confirmFavSelection);
+
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 }
 
@@ -261,7 +261,14 @@ async function geocodeAddress(addr) {
 async function tryNominatim(addr) {
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1&countrycodes=tw`,
-      { headers: { 'Accept-Language': 'zh-TW' }, signal: AbortSignal.timeout(8000) });
+      {
+        mode: 'cors',
+        headers: {
+          'Accept-Language': 'zh-TW',
+          'User-Agent': 'RouteOptimizer/8.0 (contact@example.com)'
+        },
+        signal: AbortSignal.timeout(8000)
+      });
     if (!r.ok) return null;
     const d = await r.json();
     return d?.length ? { lat: +d[0].lat, lng: +d[0].lon } : null;
@@ -353,21 +360,7 @@ function solveTSP(stopsArr, coordsMap) {
 // ── Google Sheets Import 移除 ─────────────────────────────────
 // 功能已依需求移除
 
-// ── 新增站點 ────────────────────────────────────────────────
-function addStop() {
-  const input = $('address-input');
-  const raw = input.value.trim();
-  if (!raw) { input.focus(); return; }
-
-  // 自動解析名稱：如果包含已知類型關鍵字就拆分
-  const name = raw;
-  const type = detectType(raw);
-  stops.push({ id: uid(), address: raw, name, type, district: extractDistrict(raw) });
-  input.value = ''; input.focus();
-  mapsUrls = [];
-  saveStops(); renderStops(); renderFilterTabs(); updateActionButtons(); hideSortStatus(); hideSegmentButtons();
-  toast(`已新增：${raw}`, 'success', 1400);
-}
+// ── 新增站點 (已遷移至常用地址簿) ─────────────────────────
 
 function deleteStop(id) {
   stops = stops.filter(s => s.id !== id);
@@ -590,13 +583,33 @@ function addDragEvents(li, idx) {
 function openDrawer() { $('favorites-drawer').classList.add('is-open'); $('favorites-overlay').classList.add('is-open'); }
 function closeDrawer() { $('favorites-drawer').classList.remove('is-open'); $('favorites-overlay').classList.remove('is-open'); }
 
-function addFavorite() {
+async function addFavorite() {
   const ni = $('fav-name-input'), ai = $('fav-addr-input'), ti = $('fav-type-select');
   const addr = ai.value.trim();
   if (!addr) { ai.focus(); toast('請輸入地址', 'error'); return; }
   const name = ni.value.trim() || addr;
   const type = ti ? ti.value : detectType(name);
   if (favorites.some(f => f.address === addr)) { toast('已存在', 'info'); return; }
+
+  const btn = $('btn-fav-add');
+  const oldText = btn.innerHTML;
+  btn.innerHTML = '<div class="spinner" style="display:inline-block; vertical-align:middle; margin-right:6px; width:14px; height:14px;"></div>取得座標中';
+  btn.disabled = true;
+
+  try {
+    if (!geoCache[addr]) {
+      let c = await tryNominatim(addr);
+      if (!c) c = await tryPhoton(addr);
+      if (c) {
+        geoCache[addr] = c;
+        saveGeoCache();
+      }
+    }
+  } catch (e) { }
+
+  btn.innerHTML = oldText;
+  btn.disabled = false;
+
   favorites.push({ id: uid(), name, address: addr, type });
   saveFavorites(); renderFavorites();
   ni.value = ''; ai.value = ''; if (ti) ti.value = '';
@@ -625,17 +638,85 @@ function addFavToRoute(fav) {
 
 function renderFavorites() {
   const list = $('favorites-list'), empty = $('fav-empty-state'); list.innerHTML = '';
-  if (!favorites.length) { empty.style.display = ''; return; } empty.style.display = 'none';
+  if (!favorites.length) { empty.style.display = ''; updateFavSelectionFooter(); return; }
+  empty.style.display = 'none';
+
   favorites.forEach(f => {
-    const li = document.createElement('li'); li.className = 'fav-item';
+    const li = document.createElement('li');
+    li.className = 'fav-item';
+    if (selectedFavs.has(f.id)) li.classList.add('is-selected');
+
+    li.addEventListener('click', (e) => {
+      if (e.target.closest('.fav-item__del-btn')) return;
+      if (selectedFavs.has(f.id)) {
+        selectedFavs.delete(f.id);
+        li.classList.remove('is-selected');
+        const chk = li.querySelector('.fav-checkbox');
+        if (chk) chk.checked = false;
+      } else {
+        selectedFavs.add(f.id);
+        li.classList.add('is-selected');
+        const chk = li.querySelector('.fav-checkbox');
+        if (chk) chk.checked = true;
+      }
+      updateFavSelectionFooter();
+    });
+
     const typeLabel = f.type ? `<span class="badge badge--type badge--type-${f.type === '醫院' ? 'hospital' : f.type === '診所' ? 'clinic' : f.type === '藥局' ? 'pharmacy' : 'company'}">${escHtml(f.type)}</span>` : '';
-    li.innerHTML = `<button class="fav-item__add-btn" title="加入路線"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
-      <div class="fav-item__body"><div class="fav-item__name">${escHtml(f.name)} ${typeLabel}</div><div class="fav-item__addr">${escHtml(f.address)}</div></div>
-      <button class="fav-item__del-btn" title="刪除"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`;
-    li.querySelector('.fav-item__add-btn').addEventListener('click', () => { addFavToRoute(f); closeDrawer(); });
-    li.querySelector('.fav-item__del-btn').addEventListener('click', () => deleteFavorite(f.id));
+    const isChecked = selectedFavs.has(f.id) ? 'checked' : '';
+    const coordBadge = geoCache[f.address] ? `<span class="badge badge--coord" title="座標已取得">📍</span>` : '';
+
+    li.innerHTML = `
+      <input type="checkbox" class="fav-checkbox" value="${f.id}" ${isChecked} style="margin-right: 12px; transform: scale(1.3); pointer-events: none;">
+      <div class="fav-item__body">
+          <div class="fav-item__name">${escHtml(f.name)} ${typeLabel} ${coordBadge}</div>
+          <div class="fav-item__addr">${escHtml(f.address)}</div>
+      </div>
+      <button class="fav-item__del-btn" title="刪除">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+      </button>`;
+
+    li.querySelector('.fav-item__del-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedFavs.delete(f.id);
+      deleteFavorite(f.id);
+      updateFavSelectionFooter();
+    });
     list.appendChild(li);
   });
+  updateFavSelectionFooter();
+}
+
+function updateFavSelectionFooter() {
+  const footer = $('fav-selection-footer');
+  const count = $('fav-selection-count');
+  if (footer && count) {
+    if (selectedFavs.size > 0) {
+      footer.style.display = 'block';
+      count.textContent = `已選取 ${selectedFavs.size} 項`;
+    } else {
+      footer.style.display = 'none';
+    }
+  }
+}
+
+function confirmFavSelection() {
+  if (selectedFavs.size === 0) return;
+  let addedCount = 0;
+  favorites.forEach(f => {
+    if (selectedFavs.has(f.id)) {
+      stops.push({ id: uid(), address: f.address, name: f.name, type: f.type, district: extractDistrict(f.address) });
+      addedCount++;
+    }
+  });
+  selectedFavs.clear();
+  mapsUrls = buildMapsUrls(getFilteredStops());
+  saveStops(); renderStops(); renderFilterTabs(); updateActionButtons(); hideSortStatus();
+  closeDrawer();
+  renderFavorites(); // 取消所有勾選
+  toast(`已將 ${addedCount} 個地點加入路線`, 'success', 2000);
 }
 
 // ── 地址自動建議（Nominatim）──────────────────────────────────
@@ -670,7 +751,14 @@ async function fetchSuggestions(query, dropdown, input) {
   acController = new AbortController();
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=tw&accept-language=zh-TW`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'zh-TW' }, signal: acController.signal });
+    const res = await fetch(url, {
+      mode: 'cors',
+      headers: {
+        'Accept-Language': 'zh-TW',
+        'User-Agent': 'RouteOptimizer/8.0 (contact@example.com)'
+      },
+      signal: acController.signal
+    });
     if (!res.ok) return;
     const data = await res.json();
     dropdown.innerHTML = '';
